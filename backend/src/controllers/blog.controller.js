@@ -30,3 +30,48 @@ export const createBlog = async (req, res, next) => {
         next(error);
     };
 };
+
+// update blog
+export const updateBlog = async (req, res, next) => {
+    try {
+        const { id } = req?.params;
+        const { title, content } = req?.body;
+
+        const blog = await Blog.findById(id);
+
+        if(!blog) {
+            res.status(404);
+            throw new Error('Blog not found!');
+        }
+
+        blog.title = title || blog?.title;
+        blog.content = content || blog?.content;
+
+        const updatedBlog = await blog.save();
+
+        res.status(200).json(updatedBlog);
+    } catch (error) {
+        next(error);
+    };
+};
+
+// delete blog;
+
+export const deleteBlog = async (req, res, next) => {
+    try {
+        const { id } = req?.params;
+
+        const blog = await Blog.findById(id);
+
+        if(!blog) {
+            res.status(404);
+            throw new Error('Blog not found!');
+        };
+
+        await blog?.deleteOne();
+
+        res.status(200).json({ message: 'Blog Deleted Successfully!'});
+    } catch (error) {
+        next(error);
+    };
+};
