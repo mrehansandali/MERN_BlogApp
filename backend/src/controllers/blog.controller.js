@@ -1,4 +1,5 @@
 import Blog from "../models/Blog.js";
+import slugify from "slugify";
 
 // get all blog 
 export const getAllBlogs = async (req, res, next) => {
@@ -10,6 +11,24 @@ export const getAllBlogs = async (req, res, next) => {
     }
 }
 
+// get blog by slug
+export const getblogBySlug = async (req, res, next) => {
+    try {
+        const { slug } = req.params;
+
+        const blog = await Blog.findOne({ slug });
+
+        if(!blog) {
+            res.status(404);
+            throw new Error('Blog not found!');
+        }
+
+        res.status(200).json(blog);
+    } catch (error) {
+        next(error);
+    };
+};
+
 // create blog
 export const createBlog = async (req, res, next) => {
     try {
@@ -17,15 +36,18 @@ export const createBlog = async (req, res, next) => {
 
         if(!title || !content) {
             res.status(400)
-            throw new Error('Title and content are reuired !')
+            throw new Error('Title and content are reuired !');
         }
+
+        const slug = slugify(title, { lower: true, strict: true });
 
         const blog = await Blog.create({
             title,
             content,
+            slug,
         })
 
-        res.status(200).json(blog);
+        res.status(201).json(blog);
     } catch (error) {
         next(error);
     };
