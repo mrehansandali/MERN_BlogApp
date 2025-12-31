@@ -17,11 +17,11 @@ const userSchema = new mongoose.Schema({
     role: {
         type: String,
         enum: ['admin', 'author', 'user'],
-        required: true,
+        default: 'user',
     },
     avatar: {
         type: String,
     }
 }, { timestamps: true });
 
-export default mongoose.model('User', userSchema);
+export default mongoose.model('BlogAppUser', userSchema);
