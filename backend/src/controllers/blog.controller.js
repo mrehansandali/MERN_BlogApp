@@ -1,5 +1,6 @@
 import Blog from "../models/Blog.js";
 import slugify from "slugify";
+import { checkOwnership } from "../utils/checkOwnership.js";
 
 // get all blog 
 export const getAllBlogs = async (req, res, next) => {
@@ -45,6 +46,7 @@ export const createBlog = async (req, res, next) => {
             title,
             content,
             slug,
+            author: req.user._id,
         })
 
         res.status(201).json(blog);
@@ -65,6 +67,12 @@ export const updateBlog = async (req, res, next) => {
             res.status(404);
             throw new Error('Blog not found!');
         }
+
+        // ownership check
+        if(!checkOwnership(blog.author, req.user)) {
+            res.status(403);
+            throw new Error('You are not allowed to update this blog!');
+        };
 
         blog.title = title || blog?.title;
         blog.content = content || blog?.content;
@@ -88,6 +96,12 @@ export const deleteBlog = async (req, res, next) => {
         if(!blog) {
             res.status(404);
             throw new Error('Blog not found!');
+        };
+
+        // ownership check
+        if(!checkOwnership(blog.author, req.user)) {
+            res.status(403);
+            throw new Error('You are not allowed to delete this blog!');
         };
 
         await blog?.deleteOne();

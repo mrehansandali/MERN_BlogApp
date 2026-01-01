@@ -10,11 +10,12 @@ const blogSchema = new mongoose.Schema({
     coverImage: String,
     author: {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "BlogAppUser",
+        required: true,
     },
     likes: [{
         type: mongoose.Schema.Types.ObjectId,
-        ref: "User",
+        ref: "BlogAppUser",
     }],
     isPublished: {
         type: Boolean,
