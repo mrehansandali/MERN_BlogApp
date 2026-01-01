@@ -5,12 +5,29 @@ import { checkOwnership } from "../utils/checkOwnership.js";
 // get all blog 
 export const getAllBlogs = async (req, res, next) => {
     try {
-        const blogs = await Blog.find();
-        res.status(200).json(blogs);
+        const page = Number(req.query.page) || 1;
+        const limit = 5; // fixed
+        const skip = (page - 1) * limit;
+
+        const total = await Blog.countDocuments();
+
+        const blogs = await Blog.find()
+            .populate("author", "name role")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            page,
+            pages: Math.ceil(total / limit),
+            total,
+            count: blogs.length,
+            blogs,
+        });
     } catch (error) {
-        next(error)        
+        next(error);
     }
-}
+};
 
 // get blog by slug
 export const getblogBySlug = async (req, res, next) => {
@@ -19,7 +36,7 @@ export const getblogBySlug = async (req, res, next) => {
 
         const blog = await Blog.findOne({ slug });
 
-        if(!blog) {
+        if (!blog) {
             res.status(404);
             throw new Error('Blog not found!');
         }
@@ -35,7 +52,7 @@ export const createBlog = async (req, res, next) => {
     try {
         const { title, content } = req?.body;
 
-        if(!title || !content) {
+        if (!title || !content) {
             res.status(400)
             throw new Error('Title and content are reuired !');
         }
@@ -63,13 +80,13 @@ export const updateBlog = async (req, res, next) => {
 
         const blog = await Blog.findById(id);
 
-        if(!blog) {
+        if (!blog) {
             res.status(404);
             throw new Error('Blog not found!');
         }
 
         // ownership check
-        if(!checkOwnership(blog.author, req.user)) {
+        if (!checkOwnership(blog.author, req.user)) {
             res.status(403);
             throw new Error('You are not allowed to update this blog!');
         };
@@ -93,21 +110,62 @@ export const deleteBlog = async (req, res, next) => {
 
         const blog = await Blog.findById(id);
 
-        if(!blog) {
+        if (!blog) {
             res.status(404);
             throw new Error('Blog not found!');
         };
 
         // ownership check
-        if(!checkOwnership(blog.author, req.user)) {
+        if (!checkOwnership(blog.author, req.user)) {
             res.status(403);
             throw new Error('You are not allowed to delete this blog!');
         };
 
         await blog?.deleteOne();
 
-        res.status(200).json({ message: 'Blog Deleted Successfully!'});
+        res.status(200).json({ message: 'Blog Deleted Successfully!' });
     } catch (error) {
         next(error);
     };
+};
+
+export const searchBlogs = async (req, res, next) => {
+    try {
+        const {
+            keyword,
+            author,
+            page = 1,
+        } = req.body;
+
+        const limit = 5;
+        const skip = (page - 1) * limit;
+
+        const filter = {};
+
+        if (keyword) {
+            filter.title = { $regex: keyword, $options: "i" };
+        }
+
+        if (author) {
+            filter.author = author;
+        }
+
+        const total = await Blog.countDocuments(filter);
+
+        const blogs = await Blog.find(filter)
+            .populate("author", "name role")
+            .sort({ createdAt: -1 })
+            .skip(skip)
+            .limit(limit);
+
+        res.status(200).json({
+            page,
+            pages: Math.ceil(total / limit),
+            total,
+            count: blogs.length,
+            blogs,
+        });
+    } catch (error) {
+        next(error);
+    }
 };
