@@ -23,4 +23,9 @@ const blogSchema = new mongoose.Schema({
     }
 }, { timestamps: true });
 
+
+blogSchema.index({ createdAt: -1 }); // Pagination
+blogSchema.index({ author: 1 }); // Filtering
+blogSchema.index({ title: "text", content: "text" }); // Search
+
 export default mongoose.model("Blog", blogSchema);
